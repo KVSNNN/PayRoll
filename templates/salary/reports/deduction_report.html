@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Deduction Report - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title"><i class="bi bi-dash-circle me-2 text-danger"></i>{{ report_title }}</h2>
+        <button onclick="printPage()" class="btn btn-outline-primary btn-sm"><i class="bi bi-printer"></i> Print</button>
+    </div>
+
+    {% if totals.total_deductions %}
+    <div class="content-card-body border-bottom bg-light text-center">
+        <small class="text-muted d-block">Total Deductions</small>
+        <strong class="text-danger" style="font-size:1.3rem;">₹{{ totals.total_deductions|floatformat:2 }}</strong>
+    </div>
+    {% endif %}
+
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Emp ID</th>
+                        <th>Name</th>
+                        <th>Month</th>
+                        <th>Deduction Amount</th>
+                        <th>Deduction Remarks</th>
+                        <th>Net Salary</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ record.employee.employee_id }}</td>
+                        <td><strong>{{ record.employee.name }}</strong></td>
+                        <td>{{ record.salary_month }}</td>
+                        <td class="currency text-danger fw-bold">₹{{ record.deduction_amount|floatformat:2 }}</td>
+                        <td>{{ record.deduction_remarks|default:"-" }}</td>
+                        <td class="currency">₹{{ record.net_salary|floatformat:2 }}</td>
+                        <td>
+                            <span class="status-badge status-{% if record.payment_status == 'PENDING' %}pending{% elif record.payment_status == 'PARTIALLY_PAID' %}partial{% else %}paid{% endif %}">
+                                {{ record.get_payment_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center py-4 text-muted">No deductions found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

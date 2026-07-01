@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Salary History - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title"><i class="bi bi-person-lines-fill me-2"></i>Employee Salary History</h2>
+        <button onclick="printPage()" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-printer"></i> Print
+        </button>
+    </div>
+
+    <!-- Employee Selector -->
+    <div class="content-card-body border-bottom">
+        <form method="get" class="row g-3">
+            <div class="col-md-8">
+                <select name="employee_id" class="form-select">
+                    <option value="">Select Employee...</option>
+                    {% for emp in employees %}
+                    <option value="{{ emp.pk }}" {% if employee and employee.pk == emp.pk %}selected{% endif %}>
+                        {{ emp.employee_id }} - {{ emp.name }} ({{ emp.department }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> View History</button>
+            </div>
+        </form>
+    </div>
+
+    {% if employee %}
+    <!-- Employee Info -->
+    <div class="content-card-body border-bottom bg-light">
+        <div class="row">
+            <div class="col-md-3"><small class="text-muted d-block">Employee</small><strong>{{ employee.employee_id }} - {{ employee.name }}</strong></div>
+            <div class="col-md-3"><small class="text-muted d-block">Department</small><strong>{{ employee.department }}</strong></div>
+            <div class="col-md-3"><small class="text-muted d-block">Total Earned</small><strong class="text-primary">₹{{ totals.total_net|floatformat:2|default:"0.00" }}</strong></div>
+            <div class="col-md-3"><small class="text-muted d-block">Total Paid</small><strong class="text-success">₹{{ totals.total_paid|floatformat:2|default:"0.00" }}</strong></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Month</th>
+                        <th>Monthly Salary</th>
+                        <th>Present</th>
+                        <th>Deduction</th>
+                        <th>Net Salary</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong>{{ record.salary_month }}</strong></td>
+                        <td class="currency">₹{{ record.monthly_salary|floatformat:2 }}</td>
+                        <td>{{ record.present_days }}/{{ record.total_working_days }}</td>
+                        <td class="currency">₹{{ record.deduction_amount|floatformat:2 }}</td>
+                        <td class="currency fw-bold">₹{{ record.net_salary|floatformat:2 }}</td>
+                        <td class="currency currency-positive">₹{{ record.total_salary_paid|floatformat:2 }}</td>
+                        <td class="currency {% if record.outstanding_balance > 0 %}currency-negative{% endif %}">₹{{ record.outstanding_balance|floatformat:2 }}</td>
+                        <td>
+                            <span class="status-badge status-{% if record.payment_status == 'PENDING' %}pending{% elif record.payment_status == 'PARTIALLY_PAID' %}partial{% else %}paid{% endif %}">
+                                {{ record.get_payment_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" class="text-center py-4 text-muted">{% if employee %}No salary records for this employee.{% else %}Select an employee to view history.{% endif %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
