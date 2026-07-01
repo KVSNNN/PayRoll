@@ -67,25 +67,43 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'payroll_project.wsgi.application'
 
-# Database - SQLite for development
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
 
-# MySQL configuration (uncomment for production)
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'payroll_db',
-#         'USER': 'payroll_user',
-#         'PASSWORD': 'your_password_here',
-#         'HOST': 'localhost',
-#         'PORT': '3306',
-#     }
-# }
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL and dj_database_url:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    DB_HOST = os.environ.get('DB_HOST')
+    DB_PASSWORD = os.environ.get('DB_PASSWORD')
+    if DB_HOST and DB_PASSWORD:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.environ.get('DB_NAME', 'postgres'),
+                'USER': os.environ.get('DB_USER', 'postgres'),
+                'PASSWORD': DB_PASSWORD,
+                'HOST': DB_HOST,
+                'PORT': os.environ.get('DB_PORT', '5432'),
+            }
+        }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

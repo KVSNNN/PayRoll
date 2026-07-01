@@ -102,6 +102,14 @@ def handle_delete(sender, instance, **kwargs):
 
 def register_signals():
     """Register signal handlers for configured Django models."""
+    from django.conf import settings
+    
+    # Bypass signal registration if we are directly using PostgreSQL (e.g. Supabase)
+    db_engine = settings.DATABASES.get('default', {}).get('ENGINE', '')
+    if 'postgresql' in db_engine:
+        logger.info("Direct PostgreSQL database detected. Skipping REST sync signal registration.")
+        return
+
     from django.contrib.auth import get_user_model
     from employees.models import Employee
     from salary.models import SalaryRecord, SalaryPayment
@@ -109,6 +117,7 @@ def register_signals():
 
     User = get_user_model()
     models_to_sync = [User, Employee, SalaryRecord, SalaryPayment, AuditLog]
+
 
     for model in models_to_sync:
         post_save.connect(handle_save, sender=model, dispatch_uid=f"supabase_sync_save_{model.__name__}")
