@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card" style="max-width: 800px; margin: 0 auto;">
+    <div class="content-card-header">
+        <h2 class="content-card-title">
+            <i class="bi bi-person-plus me-2"></i>{{ title }}
+            {% if employee %}<small class="text-muted ms-2">{{ employee.employee_id }}</small>{% endif %}
+        </h2>
+        <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+    <div class="content-card-body">
+        <form method="post" id="employeeForm">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Please correct the errors below.
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}<br>• {{ field }}: {{ error }}{% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Employee Name *</label>
+                    {{ form.name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Designation *</label>
+                    {{ form.designation }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Department *</label>
+                    {{ form.department }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Date of Joining *</label>
+                    {{ form.date_of_joining }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Monthly Salary (₹) *</label>
+                    {{ form.monthly_salary }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Bank Account Number</label>
+                    {{ form.bank_account }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Phone Number</label>
+                    {{ form.phone }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    {{ form.email }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Status</label>
+                    {{ form.status }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary" id="btn-save-employee">
+                    <i class="bi bi-check-lg"></i> {% if employee %}Update{% else %}Save{% endif %}
+                </button>
+                <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

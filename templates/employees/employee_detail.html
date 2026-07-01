@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ employee.name }} - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card mb-4">
+    <div class="content-card-header">
+        <h2 class="content-card-title"><i class="bi bi-person-fill me-2"></i>{{ employee.name }}</h2>
+        <div class="d-flex gap-2">
+            <span class="status-badge status-{% if employee.status == 'ACTIVE' %}active{% else %}inactive{% endif %}">
+                {{ employee.get_status_display }}
+            </span>
+            {% if request.user.is_super_admin %}
+            <a href="{% url 'employees:employee_edit' employee.pk %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            {% endif %}
+            <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+    <div class="content-card-body">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <small class="text-muted d-block">Employee ID</small>
+                <strong>{{ employee.employee_id }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Designation</small>
+                <strong>{{ employee.designation }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Department</small>
+                <strong>{{ employee.department }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Date of Joining</small>
+                <strong>{{ employee.date_of_joining|date:"d-m-Y" }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Monthly Salary</small>
+                <strong class="text-primary">₹{{ employee.monthly_salary|floatformat:2 }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Bank Account</small>
+                <strong>{{ employee.bank_account|default:"-" }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Phone</small>
+                <strong>{{ employee.phone|default:"-" }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Email</small>
+                <strong>{{ employee.email|default:"-" }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Salary History -->
+<div class="content-card">
+    <div class="content-card-header">
+        <h3 class="content-card-title"><i class="bi bi-clock-history me-2"></i>Salary History</h3>
+    </div>
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Present</th>
+                        <th>Net Salary</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in salary_records %}
+                    <tr>
+                        <td><strong>{{ record.salary_month }}</strong></td>
+                        <td>{{ record.present_days }}/{{ record.total_working_days }}</td>
+                        <td class="currency">₹{{ record.net_salary|floatformat:2 }}</td>
+                        <td class="currency currency-positive">₹{{ record.total_salary_paid|floatformat:2 }}</td>
+                        <td class="currency {% if record.outstanding_balance > 0 %}currency-negative{% endif %}">₹{{ record.outstanding_balance|floatformat:2 }}</td>
+                        <td>
+                            <span class="status-badge status-{% if record.payment_status == 'PENDING' %}pending{% elif record.payment_status == 'PARTIALLY_PAID' %}partial{% else %}paid{% endif %}">
+                                {{ record.get_payment_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'salary:salary_detail' record.pk %}" class="btn btn-outline-primary btn-icon btn-sm" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No salary records yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

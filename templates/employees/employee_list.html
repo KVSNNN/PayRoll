@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Employees - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title"><i class="bi bi-people-fill me-2"></i>Employee Master</h2>
+        <div class="d-flex gap-2">
+            <span class="badge bg-primary p-2">Total: {{ total_count }}</span>
+            <span class="badge bg-success p-2">Active: {{ active_count }}</span>
+            {% if request.user.is_super_admin %}
+            <a href="{% url 'employees:employee_create' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i> Add Employee
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Search/Filter -->
+    <div class="content-card-body border-bottom">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                {{ form.search }}
+            </div>
+            <div class="col-md-3">
+                {{ form.status }}
+            </div>
+            <div class="col-md-3">
+                {{ form.department }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>Sl.No</th>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Designation</th>
+                        <th>Department</th>
+                        <th>DOJ</th>
+                        <th>Monthly Salary</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong>{{ emp.employee_id }}</strong></td>
+                        <td>
+                            <a href="{% url 'employees:employee_detail' emp.pk %}" class="text-decoration-none fw-semibold">
+                                {{ emp.name }}
+                            </a>
+                        </td>
+                        <td>{{ emp.designation }}</td>
+                        <td>{{ emp.department }}</td>
+                        <td>{{ emp.date_of_joining|date:"d-m-Y" }}</td>
+                        <td class="currency">₹{{ emp.monthly_salary|floatformat:2 }}</td>
+                        <td>{{ emp.phone|default:"-" }}</td>
+                        <td>
+                            <span class="status-badge status-{% if emp.status == 'ACTIVE' %}active{% else %}inactive{% endif %}">
+                                {{ emp.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'employees:employee_detail' emp.pk %}" class="btn btn-outline-primary btn-icon btn-sm" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if request.user.is_super_admin %}
+                                <a href="{% url 'employees:employee_edit' emp.pk %}" class="btn btn-outline-primary btn-icon btn-sm" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if emp.status == 'ACTIVE' %}
+                                <a href="{% url 'employees:employee_delete' emp.pk %}" class="btn btn-outline-danger btn-icon btn-sm" title="Deactivate">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10">
+                            <div class="empty-state">
+                                <i class="bi bi-people empty-state-icon"></i>
+                                <h5>No Employees Found</h5>
+                                <p>Add your first employee to get started with payroll management.</p>
+                                {% if request.user.is_super_admin %}
+                                <a href="{% url 'employees:employee_create' %}" class="btn btn-primary mt-3">
+                                    <i class="bi bi-plus-lg"></i> Add Employee
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
