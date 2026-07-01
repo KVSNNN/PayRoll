@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Salary Detail - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card mb-4">
+    <div class="content-card-header">
+        <h2 class="content-card-title">
+            <i class="bi bi-wallet2 me-2"></i>{{ record.employee.name }} — {{ record.salary_month }}
+        </h2>
+        <div class="d-flex gap-2">
+            {% if not request.user.is_staff_role %}
+            <a href="{% url 'salary:export_salary_slip' record.pk %}" class="btn btn-accent btn-sm">
+                <i class="bi bi-file-earmark-pdf"></i> Salary Slip PDF
+            </a>
+            {% endif %}
+            <a href="{% url 'salary:salary_list' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+    <div class="content-card-body">
+        <!-- Status & Lock -->
+        <div class="d-flex gap-3 mb-4">
+            <span class="status-badge status-{% if record.payment_status == 'PENDING' %}pending{% elif record.payment_status == 'PARTIALLY_PAID' %}partial{% else %}paid{% endif %}" style="font-size:0.85rem;padding:6px 14px;">
+                <span class="notification-dot {% if record.payment_status == 'PENDING' %}red{% elif record.payment_status == 'PARTIALLY_PAID' %}orange{% else %}green{% endif %}"></span>
+                {{ record.get_payment_status_display }}
+            </span>
+            {% if record.is_completed %}
+            <span class="lock-badge locked" style="font-size:0.8rem;padding:6px 12px;">
+                <i class="bi bi-lock-fill"></i> Completed &amp; Locked
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Employee Info -->
+        <div class="row g-4 mb-4 pb-4 border-bottom">
+            <div class="col-md-3">
+                <small class="text-muted d-block">Employee ID</small>
+                <strong>{{ record.employee.employee_id }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Employee Name</small>
+                <strong>{{ record.employee.name }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Designation</small>
+                <strong>{{ record.employee.designation }}</strong>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Department</small>
+                <strong>{{ record.employee.department }}</strong>
+            </div>
+        </div>
+
+        <!-- Salary Calculation -->
+        <div class="row g-4 mb-4 pb-4 border-bottom">
+            <div class="col-md-2">
+                <small class="text-muted d-block">Monthly Salary</small>
+                <strong class="text-primary">₹{{ record.monthly_salary|floatformat:2 }}</strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Working Days</small>
+                <strong>{{ record.total_working_days }}</strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Present Days</small>
+                <strong class="text-success">{{ record.present_days }}</strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Absent Days</small>
+                <strong class="text-danger">{{ record.absent_days }}</strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Salary Earned</small>
+                <strong>₹{{ record.salary_earned|floatformat:2 }}</strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Deduction</small>
+                <strong class="text-danger">₹{{ record.deduction_amount|floatformat:2 }}</strong>
+                {% if record.deduction_remarks %}<br><small class="text-muted">({{ record.deduction_remarks }})</small>{% endif %}
+            </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="row g-4">
+            <div class="col-md-2">
+                <small class="text-muted d-block">Net Salary</small>
+                <strong class="text-primary" style="font-size:1.1rem;">₹{{ record.net_salary|floatformat:2 }}</strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Paid Amount</small>
+                <strong class="text-success">₹{{ record.paid_amount|floatformat:2 }}</strong>
+                {% if record.payment_date %}<br><small class="text-muted">{{ record.payment_date|date:"d-m-Y" }}</small>{% endif %}
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Balance Paid</small>
+                <strong>₹{{ record.balance_paid|floatformat:2 }}</strong>
+                {% if record.balance_paid_date %}<br><small class="text-muted">{{ record.balance_paid_date|date:"d-m-Y" }}</small>{% endif %}
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Total Paid</small>
+                <strong class="text-success" style="font-size:1.1rem;">₹{{ record.total_salary_paid|floatformat:2 }}</strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Outstanding</small>
+                <strong class="{% if record.outstanding_balance > 0 %}text-danger{% else %}text-success{% endif %}" style="font-size:1.1rem;">
+                    ₹{{ record.outstanding_balance|floatformat:2 }}
+                </strong>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted d-block">Remarks</small>
+                <span>{{ record.remarks|default:"-" }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment History -->
+<div class="content-card">
+    <div class="content-card-header">
+        <h3 class="content-card-title"><i class="bi bi-receipt me-2"></i>Payment Transactions</h3>
+    </div>
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Recorded By</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <span class="badge bg-{% if payment.payment_type == 'INITIAL' %}primary{% else %}info{% endif %}">
+                                {{ payment.get_payment_type_display }}
+                            </span>
+                        </td>
+                        <td class="currency currency-positive">₹{{ payment.amount|floatformat:2 }}</td>
+                        <td>{{ payment.payment_date|date:"d-m-Y" }}</td>
+                        <td>{{ payment.recorded_by.get_full_name|default:payment.recorded_by.username }}</td>
+                        <td>{{ payment.remarks|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center py-4 text-muted">No payment transactions recorded.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

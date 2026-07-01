@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card" style="max-width: 900px; margin: 0 auto;">
+    <div class="content-card-header">
+        <h2 class="content-card-title"><i class="bi bi-wallet2 me-2"></i>{{ title }}</h2>
+        <a href="{% url 'salary:salary_list' %}\" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+    <div class="content-card-body">
+        <form method="post" id="salaryForm">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}{{ error }}<br>{% endfor %}\n                {% endfor %}
+                {% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Employee & Month Selection -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Employee *</label>\n                    {{ form.employee }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Month *</label>
+                    {{ form.month }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Year *</label>\n                    {{ form.year }}
+                </div>
+            </div>
+
+            <!-- Salary Details -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Monthly Salary</label>
+                    <div class="calculated-field" id="display-monthly-salary">
+                        {% if record %}₹{{ record.monthly_salary|floatformat:2 }}{% else %}Select Employee{% endif %}
+                    </div>
+                    <input type="hidden" id="hidden-monthly-salary" value="{% if record %}{{ record.monthly_salary }}{% endif %}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Total Working Days *</label>
+                    {{ form.total_working_days }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Present Days *</label>
+                    {{ form.present_days }}
+                </div>
+            </div>
+
+            <!-- Auto-Calculated Display -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Absent Days</label>
+                    <div class="calculated-field" id="calc-absent-days">{% if record %}{{ record.absent_days }}{% else %}0{% endif %}</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Salary Earned</label>\n                    <div class="calculated-field" id="calc-salary-earned">{% if record %}₹{{ record.salary_earned|floatformat:2 }}{% else %}₹0.00{% endif %}</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Net Salary</label>
+                    <div class="calculated-field" id="calc-net-salary" style="color:var(--success);font-size:1.1rem;">
+                        {% if record %}₹{{ record.net_salary|floatformat:2 }}{% else %}₹0.00{% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Balance</label>
+                    <div class="calculated-field" id="calc-balance" style="color:var(--danger);">
+                        {% if record %}₹{{ record.outstanding_balance|floatformat:2 }}{% else %}₹0.00{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deductions -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Deduction Amount (₹)</label>\n                    {{ form.deduction_amount }}
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Deduction Remarks</label>
+                    {{ form.deduction_remarks }}
+                </div>
+            </div>
+
+            <!-- Payment -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Paid Amount (₹)</label>
+                    {{ form.paid_amount }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Payment Date</label>\n                    {{ form.payment_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Remarks</label>
+                    {{ form.remarks }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> {% if record %}Update{% else %}Save{% endif %}
+                </button>
+                <a href="{% url 'salary:salary_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initSalaryCalculations();
+    initEmployeeSelect();
+});
+</script>
+{% endblock %}
