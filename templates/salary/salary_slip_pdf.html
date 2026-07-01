@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Salary Slip - {{ record.employee.employee_id }}</title>
+    <style>
+        @page { size: A4; margin: 2cm; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; font-size: 12px; line-height: 1.5; }
+        .slip-header { background: #1B2A4A; color: #fff; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .slip-header h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+        .slip-header p { margin: 5px 0 0; opacity: 0.8; font-size: 11px; }
+        .slip-title { background: #f0f2f5; padding: 10px 15px; font-weight: bold; font-size: 13px; color: #1B2A4A; margin: 15px 0 10px; border-left: 4px solid #E8A838; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .info-table td { padding: 6px 12px; border: 1px solid #e5e7eb; }
+        .info-table td:first-child { background: #f8fafc; font-weight: 600; color: #6b7280; width: 35%; font-size: 11px; text-transform: uppercase; }
+        .salary-table th { background: #1B2A4A; color: #fff; padding: 8px 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
+        .salary-table td { padding: 8px 12px; border: 1px solid #e5e7eb; }
+        .salary-table .amount { text-align: right; font-weight: 600; }
+        .net-row td { background: #e8f5e9; font-weight: bold; font-size: 14px; }
+        .total-box { background: #1B2A4A; color: #fff; padding: 15px; text-align: center; margin-top: 20px; }
+        .total-box .amount { font-size: 24px; font-weight: bold; color: #E8A838; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #9ca3af; }
+        .status-paid { color: #10b981; font-weight: bold; }
+        .status-pending { color: #ef4444; font-weight: bold; }
+        .status-partial { color: #f59e0b; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="slip-header">
+        <h1>{{ company_name }}</h1>
+        <p>SALARY SLIP — {{ record.salary_month }}</p>
+    </div>
+
+    <div class="slip-title">EMPLOYEE DETAILS</div>
+    <table class="info-table">
+        <tr><td>Employee ID</td><td>{{ record.employee.employee_id }}</td></tr>
+        <tr><td>Employee Name</td><td>{{ record.employee.name }}</td></tr>
+        <tr><td>Designation</td><td>{{ record.employee.designation }}</td></tr>
+        <tr><td>Department</td><td>{{ record.employee.department }}</td></tr>
+        <tr><td>Date of Joining</td><td>{{ record.employee.date_of_joining|date:"d-m-Y" }}</td></tr>
+        <tr><td>Salary Month</td><td>{{ record.salary_month }}</td></tr>
+    </table>
+
+    <div class="slip-title">SALARY BREAKDOWN</div>
+    <table class="salary-table">
+        <thead>
+            <tr><th>Description</th><th style="text-align:right;">Amount (₹)</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Monthly Salary</td><td class="amount">₹{{ record.monthly_salary|floatformat:2 }}</td></tr>
+            <tr><td>Working Days</td><td class="amount">{{ record.total_working_days }}</td></tr>
+            <tr><td>Present Days</td><td class="amount">{{ record.present_days }}</td></tr>
+            <tr><td>Absent Days</td><td class="amount">{{ record.absent_days }}</td></tr>
+            <tr><td>Salary Earned</td><td class="amount">₹{{ record.salary_earned|floatformat:2 }}</td></tr>
+            <tr><td>Deduction {% if record.deduction_remarks %}({{ record.deduction_remarks }}){% endif %}</td><td class="amount" style="color:#ef4444;">- ₹{{ record.deduction_amount|floatformat:2 }}</td></tr>
+            <tr class="net-row"><td>Net Salary Payable</td><td class="amount">₹{{ record.net_salary|floatformat:2 }}</td></tr>
+        </tbody>
+    </table>
+
+    <div class="slip-title">PAYMENT DETAILS</div>
+    <table class="info-table">
+        <tr><td>Amount Paid</td><td>₹{{ record.paid_amount|floatformat:2 }} {% if record.payment_date %}({{ record.payment_date|date:"d-m-Y" }}){% endif %}</td></tr>
+        <tr><td>Balance Paid</td><td>₹{{ record.balance_paid|floatformat:2 }} {% if record.balance_paid_date %}({{ record.balance_paid_date|date:"d-m-Y" }}){% endif %}</td></tr>
+        <tr><td>Total Salary Paid</td><td><strong>₹{{ record.total_salary_paid|floatformat:2 }}</strong></td></tr>
+        <tr><td>Outstanding Balance</td><td>₹{{ record.outstanding_balance|floatformat:2 }}</td></tr>
+        <tr><td>Payment Status</td><td class="status-{% if record.payment_status == 'PAID' %}paid{% elif record.payment_status == 'PENDING' %}pending{% else %}partial{% endif %}">{{ record.get_payment_status_display }}</td></tr>
+    </table>
+
+    <div class="total-box">
+        <p style="margin:0;font-size:11px;opacity:0.7;">NET AMOUNT PAID</p>
+        <div class="amount">₹{{ record.total_salary_paid|floatformat:2 }}</div>
+    </div>
+
+    <div class="footer">
+        <p>This is a computer-generated salary slip and does not require a signature.</p>
+        <p>Generated on {{ generated_at|date:"d-m-Y H:i" }} | {{ company_name }}</p>
+    </div>
+</body>
+</html>

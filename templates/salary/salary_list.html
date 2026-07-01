@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Salary Records - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title"><i class="bi bi-wallet2 me-2"></i>Salary Payment Register</h2>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if not request.user.is_staff_role %}
+            <a href="{% url 'salary:salary_create' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i> New Entry
+            </a>
+            <a href="{% url 'salary:export_excel' %}" class="btn btn-success btn-sm">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Search/Filter -->
+    <div class="content-card-body border-bottom">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">{{ form.search }}</div>
+            <div class="col-md-3">{{ form.month }}</div>
+            <div class="col-md-2">{{ form.year }}</div>
+            <div class="col-md-2">{{ form.status }}</div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Bar -->
+    {% if totals.total_net %}
+    <div class="content-card-body border-bottom bg-light">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <small class="text-muted d-block">Total Net Salary</small>
+                <strong class="text-primary">₹{{ totals.total_net|floatformat:2 }}</strong>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted d-block">Total Paid</small>
+                <strong class="text-success">₹{{ totals.total_paid|floatformat:2|default:"0.00" }}</strong>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted d-block">Total Outstanding</small>
+                <strong class="text-danger">₹{{ totals.total_balance|floatformat:2|default:"0.00" }}</strong>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Table -->
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Month</th>
+                        <th>Employee ID</th>
+                        <th>Employee Name</th>
+                        <th>Monthly Salary</th>
+                        <th>Present</th>
+                        <th>Deduction</th>
+                        <th>Net Salary</th>
+                        <th>Paid</th>
+                        <th>Paid Date</th>
+                        <th>Balance</th>
+                        <th>Bal. Paid</th>
+                        <th>Status</th>
+                        <th>Lock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong>{{ record.salary_month }}</strong></td>
+                        <td>{{ record.employee.employee_id }}</td>
+                        <td>{{ record.employee.name }}</td>
+                        <td class="currency">₹{{ record.monthly_salary|floatformat:2 }}</td>
+                        <td>{{ record.present_days }}/{{ record.total_working_days }}</td>
+                        <td class="currency">
+                            ₹{{ record.deduction_amount|floatformat:2 }}
+                            {% if record.deduction_remarks %}
+                            <br><small class="text-muted">({{ record.deduction_remarks|truncatewords:5 }})</small>
+                            {% endif %}
+                        </td>
+                        <td class="currency fw-bold">₹{{ record.net_salary|floatformat:2 }}</td>
+                        <td class="currency currency-positive">₹{{ record.paid_amount|floatformat:2 }}</td>
+                        <td>{{ record.payment_date|date:"d-m-Y"|default:"-" }}</td>
+                        <td class="currency {% if record.outstanding_balance > 0 %}currency-negative{% endif %}">
+                            ₹{{ record.outstanding_balance|floatformat:2 }}
+                        </td>
+                        <td class="currency">
+                            ₹{{ record.balance_paid|floatformat:2 }}
+                            {% if record.balance_paid_date %}
+                            <br><small class="text-muted">{{ record.balance_paid_date|date:"d-m-Y" }}</small>\n                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge status-{% if record.payment_status == 'PENDING' %}pending{% elif record.payment_status == 'PARTIALLY_PAID' %}partial{% else %}paid{% endif %}">
+                                <span class="notification-dot {% if record.payment_status == 'PENDING' %}red{% elif record.payment_status == 'PARTIALLY_PAID' %}orange{% else %}green{% endif %}"></span>
+                                {{ record.get_payment_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if record.is_completed %}
+                            <span class="lock-badge locked"><i class="bi bi-lock-fill"></i></span>
+                            {% else %}
+                            <span class="lock-badge unlocked"><i class="bi bi-unlock"></i></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'salary:salary_detail' record.pk %}" class="btn btn-outline-primary btn-icon btn-sm" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if not request.user.is_staff_role %}
+                                    {% if not record.is_completed or request.user.is_super_admin %}
+                                    <a href="{% url 'salary:salary_edit' record.pk %}" class="btn btn-outline-primary btn-icon btn-sm" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if record.outstanding_balance > 0 and not record.is_completed %}
+                                    <a href="{% url 'salary:balance_payment' record.pk %}" class="btn btn-outline-success btn-icon btn-sm" title="Pay Balance">
+                                        <i class="bi bi-cash"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if request.user.is_super_admin %}
+                                    <form method="post" action="{% url 'salary:salary_toggle_lock' record.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-{% if record.is_completed %}warning{% else %}secondary{% endif %} btn-icon btn-sm" title="{% if record.is_completed %}Unlock{% else %}Lock{% endif %}">
+                                            <i class="bi bi-{% if record.is_completed %}unlock{% else %}lock{% endif %}"></i>
+                                        </button>\n                                    </form>\n                                    {% endif %}\n                                {% endif %}\n                            </div>\n                        </td>\n                    </tr>\n                    {% empty %}\n                    <tr>\n                        <td colspan="15">\n                            <div class=\"empty-state\">\n                                <i class=\"bi bi-wallet2 empty-state-icon\"></i>\n                                <h5>No Salary Records</h5>\n                                <p>Create your first salary entry to start tracking payments.</p>\n                            </div>\n                        </td>\n                    </tr>\n                    {% endfor %}\n                </tbody>\n            </table>\n        </div>\n    </div>\n</div>\n{% endblock %}\n
