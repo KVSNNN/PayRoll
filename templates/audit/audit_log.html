@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit Log - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title"><i class="bi bi-journal-text me-2"></i>Audit Log</h2>
+    </div>
+
+    <!-- Filters -->
+    <div class="content-card-body border-bottom">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <select name="action" class="form-select">
+                    <option value="">All Actions</option>
+                    <option value="CREATE" {% if selected_action == 'CREATE' %}selected{% endif %}>Create</option>
+                    <option value="UPDATE" {% if selected_action == 'UPDATE' %}selected{% endif %}>Update</option>
+                    <option value="DELETE" {% if selected_action == 'DELETE' %}selected{% endif %}>Delete</option>
+                    <option value="LOCK" {% if selected_action == 'LOCK' %}selected{% endif %}>Lock</option>
+                    <option value="UNLOCK" {% if selected_action == 'UNLOCK' %}selected{% endif %}>Unlock</option>
+                    <option value="LOGIN" {% if selected_action == 'LOGIN' %}selected{% endif %}>Login</option>
+                    <option value="LOGOUT" {% if selected_action == 'LOGOUT' %}selected{% endif %}>Logout</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="model" class="form-control" placeholder="Model (Employee, SalaryRecord...)" value="{{ selected_model }}">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="user" class="form-control" placeholder="Username..." value="{{ selected_user }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Filter</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Model</th>
+                        <th>Record ID</th>
+                        <th>Changes</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>
+                            <small>{{ log.timestamp|date:"d-m-Y" }}</small><br>
+                            <small class="text-muted">{{ log.timestamp|time:"H:i:s" }}</small>
+                        </td>
+                        <td><strong>{{ log.username }}</strong></td>
+                        <td>
+                            <span class="badge bg-{{ log.action_color }}">
+                                <i class="bi {{ log.action_icon }} me-1\"></i>{{ log.action }}
+                            </span>
+                        </td>
+                        <td>{{ log.model_name }}</td>
+                        <td>{{ log.record_id|default:"-" }}</td>
+                        <td>
+                            {% if log.changes %}
+                            <small class="text-muted">
+                                {% for key, val in log.changes.items %}
+                                    <span class="d-block">{{ key }}: \n                                    {% if val.old %}{{ val.old }} → {% endif %}{{ val.new|default:val }}\n                                    </span>
+                                {% endfor %}
+                            </small>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><small class="text-muted">{{ log.ip_address|default:"-" }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No audit logs found.</td></tr>\n                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

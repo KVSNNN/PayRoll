@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}\n\n{% block title %}Login - PayrollPro{% endblock %}
+
+{% block auth_content %}
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-brand">
+            <i class="bi bi-currency-rupee brand-icon-lg"></i>
+            <h2>PayrollPro</h2>
+            <p>Payroll Management System</p>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-3" role="alert">
+            <i class="bi bi-{% if message.tags == 'error' %}exclamation-triangle{% else %}info-circle{% endif %}-fill me-2"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post" class="login-form" id="loginForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="login-username" class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    {{ form.username }}
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="login-password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    {{ form.password }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="login-submit">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Sign In
+            </button>
+        </form>
+
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                <i class="bi bi-shield-lock me-1"></i>
+                Secure Login • Role-Based Access
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}

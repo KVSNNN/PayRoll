@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}User Accounts - PayrollPro{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="content-card-header">
+        <h2 class="content-card-title"><i class="bi bi-shield-lock me-2"></i>User Accounts</h2>
+        <a href="{% url 'accounts:user_create' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> New User
+        </a>
+    </div>
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Locked</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong>{{ u.username }}</strong></td>
+                        <td>{{ u.get_full_name|default:'-' }}</td>
+                        <td>{{ u.email|default:'-' }}</td>
+                        <td>
+                            <span class="badge bg-{{ u.role|lower }}">{{ u.get_role_display }}</span>
+                        </td>
+                        <td>
+                            {% if u.is_active %}
+                            <span class="status-badge status-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                            {% else %}\n                            <span class="status-badge status-inactive"><i class="bi bi-x-circle-fill\"></i> Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.is_locked %}
+                            <span class="lock-badge locked"><i class="bi bi-lock-fill"></i> Locked</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'accounts:user_edit' u.pk %}" class="btn btn-outline-primary btn-icon btn-sm" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if u != request.user %}
+                                <form method="post" action="{% url 'accounts:user_toggle_active' u.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-{% if u.is_active %}warning{% else %}success{% endif %} btn-icon btn-sm" title="{% if u.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                        <i class="bi bi-{% if u.is_active %}pause{% else %}play{% endif %}-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if u.is_locked %}
+                                <a href="{% url 'accounts:user_unlock' u.pk %}" class="btn btn-info btn-icon btn-sm" title="Unlock">
+                                    <i class="bi bi-unlock"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No users found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
