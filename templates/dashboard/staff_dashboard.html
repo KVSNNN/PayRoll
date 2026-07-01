@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}My Salary - PayrollPro{% endblock %}
+
+{% block content %}
+{% if employee %}
+<!-- Staff Info Card -->
+<div class="content-card mb-4">
+    <div class="content-card-body">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="stat-card-icon" style="width:64px;height:64px;font-size:2rem;background:rgba(27,42,74,0.06);color:var(--primary);border-radius:16px;">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h4 class="mb-1">{{ employee.name }}</h4>
+                <p class="text-muted mb-0">{{ employee.employee_id }} • {{ employee.designation }} • {{ employee.department }}</p>\n            </div>
+            <div class="col-auto text-end">
+                <div class="stat-card-value">₹{{ employee.monthly_salary|floatformat:0 }}</div>
+                <small class="text-muted">Monthly Salary</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card card-info">
+            <div class="stat-card-header">
+                <span class="stat-card-title">Total Earned</span>
+                <div class="stat-card-icon"><i class="bi bi-cash-stack"></i></div>
+            </div>
+            <div class="stat-card-value">₹{{ totals.total_earned|floatformat:0|default:"0" }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card card-success">
+            <div class="stat-card-header">
+                <span class="stat-card-title">Total Received</span>
+                <div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div>
+            </div>
+            <div class="stat-card-value currency-positive">₹{{ totals.total_received|floatformat:0|default:"0" }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card card-danger">
+            <div class="stat-card-header">
+                <span class="stat-card-title">Pending Amount</span>
+                <div class="stat-card-icon"><i class="bi bi-clock-fill"></i></div>
+            </div>
+            <div class="stat-card-value">₹{{ totals.total_pending|floatformat:0|default:"0" }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Salary History -->
+<div class="content-card">
+    <div class="content-card-header">
+        <h3 class="content-card-title"><i class="bi bi-clock-history me-2"></i>Salary History</h3>
+    </div>
+    <div class="content-card-body p-0">
+        <div class="table-responsive">
+            <table class="table payroll-table">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Present Days</th>
+                        <th>Net Salary</th>
+                        <th>Deduction</th>
+                        <th>Paid Amount</th>
+                        <th>Balance</th>
+                        <th>Payment Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td><strong>{{ record.salary_month }}</strong></td>
+                        <td>{{ record.present_days }} / {{ record.total_working_days }}</td>
+                        <td class="currency">₹{{ record.net_salary|floatformat:2 }}</td>
+                        <td class="currency">₹{{ record.deduction_amount|floatformat:2 }}</td>
+                        <td class="currency currency-positive">₹{{ record.total_salary_paid|floatformat:2 }}</td>
+                        <td class="currency {% if record.outstanding_balance > 0 %}currency-negative{% endif %}">₹{{ record.outstanding_balance|floatformat:2 }}</td>
+                        <td>{{ record.payment_date|date:"d-m-Y"|default:"-" }}</td>
+                        <td>
+                            <span class="status-badge status-{% if record.payment_status == 'PENDING' %}pending{% elif record.payment_status == 'PARTIALLY_PAID' %}partial{% else %}paid{% endif %}">
+                               <span class="notification-dot {% if record.payment_status == 'PENDING' %}red{% elif record.payment_status == 'PARTIALLY_PAID' %}orange{% else %}green{% endif %}"></span>
+                                {{ record.get_payment_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No salary records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="content-card">
+    <div class="content-card-body">
+        <div class="empty-state">
+            <i class="bi bi-person-x empty-state-icon"></i>
+            <h5>No Employee Profile Linked</h5>\n            <p>Your account is not linked to an employee record. Please contact your administrator.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

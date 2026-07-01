@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - PayrollPro{% endblock %}
+
+{% block page_content_class %}dashboard-page-content{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Dashboard Stats Cards -->
+    <div class="dashboard-stats-section">
+        <div class="row g-4 mb-4">
+            <div class="col-md-4 col-lg-2">
+                <div class="stat-card card-primary animate-fade-in">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Total Employees</span>
+                        <div class="stat-card-icon"><i class="bi bi-people-fill"></i></div>
+                    </div>
+                    <div class="stat-card-value">{{ total_employees }}</div>
+                    <div class="stat-card-subtitle">{{ total_inactive }} inactive</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="stat-card card-info animate-fade-in" style="animation-delay: 50ms">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Monthly Salary</span>
+                        <div class="stat-card-icon"><i class="bi bi-cash-stack"></i></div>
+                    </div>
+                    <div class="stat-card-value">₹{{ total_net_salary|floatformat:0|default:"0" }}</div>
+                    <div class="stat-card-subtitle">{{ current_month }}</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="stat-card card-success animate-fade-in" style="animation-delay: 100ms">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Total Paid</span>
+                        <div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div>
+                    </div>
+                    <div class="stat-card-value currency-positive">₹{{ total_paid|floatformat:0|default:"0" }}</div>
+                    <div class="stat-card-subtitle">This month</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="stat-card card-danger animate-fade-in" style="animation-delay: 150ms">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Total Balance</span>
+                        <div class="stat-card-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
+                    </div>
+                    <div class="stat-card-value">₹{{ total_balance|floatformat:0|default:"0" }}</div>
+                    <div class="stat-card-subtitle">Outstanding</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="stat-card card-warning animate-fade-in" style="animation-delay: 200ms">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Pending</span>
+                        <div class="stat-card-icon"><i class="bi bi-clock-fill"></i></div>
+                    </div>
+                    <div class="stat-card-value">{{ pending_count }}</div>
+                    <div class="stat-card-subtitle">{{ partial_count }} partial</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="stat-card card-accent animate-fade-in" style="animation-delay: 250ms">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Completed</span>
+                        <div class="stat-card-icon"><i class="bi bi-lock-fill"></i></div>
+                    </div>
+                    <div class="stat-card-value">{{ completed_count }}</div>
+                    <div class="stat-card-subtitle">{{ paid_count }} fully paid</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrollable Data Section -->
+    <div class="dashboard-data-section">
+        <div class="row g-4">
+            <!-- Pending Payments -->
+            <div class="col-lg-7">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Pending Payments</h3>
+                        <a href="{% url 'salary:report_pending' %}" class="btn btn-outline-primary btn-sm">View All</a>
+                    </div>
+                    <div class="content-card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table payroll-table">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Month</th>
+                                        <th>Net Salary</th>
+                                        <th>Paid</th>
+                                        <th>Balance</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in pending_records %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ record.employee.name }}</strong>
+                                            <br><small class="text-muted">{{ record.employee.employee_id }}</small>\n                                        </td>
+                                        <td>{{ record.salary_month }}</td>
+                                        <td class="currency">₹{{ record.net_salary|floatformat:2 }}</td>
+                                        <td class="currency currency-positive">₹{{ record.total_salary_paid|floatformat:2 }}</td>
+                                        <td class="currency currency-negative">₹{{ record.outstanding_balance|floatformat:2 }}</td>
+                                        <td>
+                                            <span class="status-badge status-{% if record.payment_status == 'PENDING' %}pending{% elif record.payment_status == 'PARTIALLY_PAID' %}partial{% else %}paid{% endif %}">
+                                                <span class="notification-dot {% if record.payment_status == 'PENDING' %}red{% elif record.payment_status == 'PARTIALLY_PAID' %}orange{% else %}green{% endif %}"></span>
+                                                {{ record.get_payment_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <i class="bi bi-check-circle text-success me-2"></i>
+                                            No pending payments!
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="col-lg-5">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title"><i class="bi bi-activity me-2"></i>Recent Activity</h3>
+                        {% if user.is_super_admin %}\n                        <a href="{% url 'audit:audit_log' %}" class="btn btn-outline-primary btn-sm">View All</a>\n                        {% endif %}
+                    </div>
+                    <div class="content-card-body">
+                        {% for log in recent_logs %}
+                        <div class="d-flex align-items-start gap-3 {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                            <div class="stat-card-icon" style="width:32px;height:32px;min-width:32px;font-size:0.9rem;">
+                                <i class="bi {{ log.action_icon }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="badge bg-{{ log.action_color }} me-1" style="font-size:0.65rem;">{{ log.action }}</span>
+                                        <strong style="font-size:0.82rem;">{{ log.model_name }}</strong>
+                                    </div>
+                                    <small class="text-muted" style="font-size:0.7rem;">{{ log.timestamp|timesince }} ago</small>
+                                </div>
+                                <small class="text-muted">by {{ log.username }}</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center mb-0">No recent activity</p>\n                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Quick Actions Section -->
+    <div class="dashboard-actions-section">
+        <div class="row g-4 mt-2">
+            <div class="col-12">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title"><i class="bi bi-lightning me-2"></i>Quick Actions</h3>
+                    </div>
+                    <div class="content-card-body">
+                        <div class="d-flex flex-wrap gap-3">
+                            {% if user.is_super_admin %}
+                            <a href="{% url 'employees:employee_create' %}" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i> Add Employee
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'salary:salary_create' %}" class="btn btn-accent">
+                                <i class="bi bi-plus-circle"></i> New Salary Entry
+                            </a>
+                            <a href="{% url 'salary:export_excel' %}" class="btn btn-success">
+                                <i class="bi bi-file-earmark-excel"></i> Export Excel
+                            </a>
+                            <a href="{% url 'salary:report_monthly' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-bar-chart"></i> Monthly Report
+                            </a>
+                            <a href="{% url 'salary:report_pending' %}" class="btn btn-outline-danger">
+                                <i class="bi bi-exclamation-circle"></i> Pending Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
